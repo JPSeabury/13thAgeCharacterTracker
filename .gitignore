@@ -8,15 +8,17 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+.dist
+.env*
 dist-ssr
 *.local
+coverage
 
 # Editor directories and files
+.DS_Store
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
