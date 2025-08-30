@@ -6,7 +6,13 @@ import { nanoid } from '../utils/id';
 
 /** A temporary character-in-progress used by the wizard */
 type Draft = (Partial<Character> & { id?: string }) & {
-  kinPowerIds?: string[]; // <-- add this line
+  kinPowerIds?: string[];
+  picks?: {
+    talents?: string[];
+    powers?: string[];
+    spells?: string[];
+    maneuvers?: string[];
+  };
 };
 
 interface CharacterState {
