@@ -13,6 +13,7 @@ type Draft = (Partial<Character> & { id?: string }) & {
     spells?: string[];
     maneuvers?: string[];
   };
+  feats?: string[];
 };
 
 interface CharacterState {
