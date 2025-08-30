@@ -5,7 +5,9 @@ import { emptyAbilities } from '../utils/calc';
 import { nanoid } from '../utils/id';
 
 /** A temporary character-in-progress used by the wizard */
-type Draft = Partial<Character> & { id?: string };
+type Draft = (Partial<Character> & { id?: string }) & {
+  kinPowerIds?: string[]; // <-- add this line
+};
 
 interface CharacterState {
   // Saved characters
