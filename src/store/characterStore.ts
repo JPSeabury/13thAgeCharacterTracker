@@ -1,12 +1,21 @@
 import { create } from 'zustand';
+import { createBattleSlice, BattleSlice } from '@/rules/wiring';
+
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Character } from '../types/character';
 import { emptyAbilities } from '../utils/calc';
 import { nanoid } from '../utils/id';
 
+export const useBattleStore = create<BattleSlice>()((...a) => ({
+  ...createBattleSlice(...a),
+}));
+
 /** A temporary character-in-progress used by the wizard */
 type Draft = (Partial<Character> & { id?: string }) & {
-  kinPowerIds?: string[];
+  // The Kin the user picked (store just the id)
+  kinId?: string;        // 'human' | 'dwarf' ...
+  // Selected Kin Power ids for that Kin
+  kinPowers?: string[];  // e.g., ['human-quick-to-fight']
   picks?: {
     talents?: string[];
     powers?: string[];
@@ -29,6 +38,10 @@ interface CharacterState {
   updateDraft: (patch: Partial<Character>) => void;
   discardDraft: () => void;
   commitDraft: () => string; // returns new character id
+
+  // Wizard kin selection helpers
+  setKin: (kinId: string) => void;
+  setKinPowers: (powerIds: string[]) => void;
 }
 
 export const useCharacterStore = create<CharacterState>()(
@@ -74,6 +87,9 @@ export const useCharacterStore = create<CharacterState>()(
             name: '',
             level: 1,
             notes: '',
+            // initialize kin defaults for the wizard (optional)
+            kinId: undefined,     // or 'human' if you prefer to preselect
+            kinPowers: [],
             abilityScores: emptyAbilities(),
             createdAt: now,
             updatedAt: now,
@@ -86,6 +102,36 @@ export const useCharacterStore = create<CharacterState>()(
         set((s) =>
           s.draft
             ? { draft: { ...s.draft, ...patch, updatedAt: Date.now() } }
+            : s
+        ),
+
+      /** Set kin id for the draft */
+      setKin: (kinId) =>
+        set((s) =>
+          s.draft
+            ? {
+                draft: {
+                  ...s.draft,
+                  kinId,
+                  // clear powers when kin changes
+                  kinPowers: [],
+                  updatedAt: Date.now(),
+                },
+              }
+            : s
+        ),
+
+      /** Replace the selected kin power ids for the draft */
+      setKinPowers: (ids) =>
+        set((s) =>
+          s.draft
+            ? {
+                draft: {
+                  ...s.draft,
+                  kinPowers: [...ids],
+                  updatedAt: Date.now(),
+                },
+              }
             : s
         ),
 
@@ -103,10 +149,23 @@ export const useCharacterStore = create<CharacterState>()(
           name: d.name ?? '',
           level: d.level ?? 1,
           notes: d.notes ?? '',
-          kin: d.kin,
+
+          // If your Character type has `kin` (string), prefer draft.kinId when present:
+          kin: (d as any).kin ?? d.kinId,   // keeps backward compat with your existing drafts
           class: d.class,
+
+          // add if supported by your Character type:
+          kinPowers: d.kinPowers ?? [],
+
           abilityScores: d.abilityScores ?? emptyAbilities(),
-          features: d.features ?? [],
+
+          // If your Character type doesn't yet have `kinPowers`, you can temporarily keep them in features.
+          // Replace this once you add a `kinPowers` field to Character.
+          features: [
+            ...(d.features ?? []),
+            ...(d.kinPowers?.map(id => ({ type: 'kin-power', id })) ?? []),
+          ],
+
           feats: d.feats ?? [],
           equipment: d.equipment ?? { weapons: [] },
           defenses: d.defenses,

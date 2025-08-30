@@ -88,6 +88,8 @@ export default function StepAbilityScores({ onNext, onBack }: Props) {
 
   const isValid = assignedAll && boostCount === 2;
 
+  const mod = (score: number) => Math.floor((score - 10) / 2);
+
   // ---- Handlers ----
   function handleAssign(k: AbilityKey, val: number | '') {
     setAssign((prev) => ({ ...prev, [k]: val === '' ? null : Number(val) }));
@@ -180,11 +182,17 @@ export default function StepAbilityScores({ onNext, onBack }: Props) {
           {ABILITY_KEYS.map((k) => {
             const base = assign[k];
             const plus = boost[k] ? 2 : 0;
-            const show = base !== null ? base + plus : '—';
+            const val = base !== null ? base + plus : null;
             return (
               <div key={k} className="rounded-md bg-zinc-800 px-2 py-1 text-center">
                 <div className="text-xs text-zinc-400">{k.toUpperCase()}</div>
-                <div className="font-semibold">{show}</div>
+                {val === null ? (
+                  <div className="font-semibold">—</div>
+                ) : (
+                  <div className="font-semibold">
+                    {val} <span className="text-zinc-400">({mod(val) >= 0 ? `+${mod(val)}` : mod(val)})</span>
+                  </div>
+                )}
               </div>
             );
           })}
