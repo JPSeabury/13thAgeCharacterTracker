@@ -39,7 +39,9 @@ export default function Home() {
             <li key={c.id} className="border border-zinc-800 rounded-xl p-4 bg-zinc-900">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-semibold text-lg">{c.name || 'Unnamed Hero'}</h3>
+                  <a href={`/character/${c.id}`} className="font-semibold text-lg hover:underline">
+                    {c.name || 'Unnamed Hero'}
+                  </a>
                   <p className="text-sm text-zinc-400">Lv {c.level}</p>
                 </div>
                 <button className="text-red-400 hover:underline" onClick={() => deleteCharacter(c.id)}>
