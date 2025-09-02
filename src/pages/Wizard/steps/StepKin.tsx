@@ -39,7 +39,6 @@ export default function StepKin({ onNext, onBack }: Props) {
     setPowerIds(prev => {
       const has = prev.includes(id);
       if (has) return prev.filter(x => x !== id);
-      // if adding would exceed requiredPicks, block
       if (selectedKin && prev.length >= selectedKin.requiredPicks) return prev;
       return [...prev, id];
     });
@@ -60,7 +59,12 @@ export default function StepKin({ onNext, onBack }: Props) {
         <h3 className="font-semibold mb-3">Choose your kin</h3>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
           {KIN.map(k => (
-            <label key={k.id} className={`flex items-center gap-2 rounded-md px-3 py-2 bg-zinc-800 cursor-pointer border ${kinId === k.id ? 'border-indigo-500' : 'border-transparent'}`}>
+            <label
+              key={k.id}
+              className={`flex items-center gap-2 rounded-md px-3 py-2 bg-zinc-800 cursor-pointer border ${
+                kinId === k.id ? 'border-indigo-500' : 'border-transparent'
+              }`}
+            >
               <input
                 type="radio"
                 name="kin"
@@ -82,29 +86,88 @@ export default function StepKin({ onNext, onBack }: Props) {
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Kin Powers</h3>
             <span className="text-xs text-zinc-400">
-              Choose {selectedKin.requiredPicks} {selectedKin.requiredPicks === 1 ? 'power' : 'powers'}
+              Choose {selectedKin.requiredPicks}{' '}
+              {selectedKin.requiredPicks === 1 ? 'power' : 'powers'}
             </span>
           </div>
-          <div className="mt-3 grid gap-2">
-            {selectedKin.powers.map(p => (
-              <label key={p.id} className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={powerIds.includes(p.id)}
-                  onChange={() => togglePower(p.id)}
-                  disabled={
-                    !powerIds.includes(p.id) &&
-                    powerIds.length >= selectedKin.requiredPicks
-                  }
-                />
-                <div>
-                  <div className="font-medium">{p.name}</div>
-                  {p.description && (
-                    <div className="text-xs text-zinc-400">{p.description}</div>
-                  )}
-                </div>
-              </label>
-            ))}
+
+          {/* >>> REPLACED LIST WITH CARD GRID <<< */}
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {selectedKin.powers.map(p => {
+              const checked = powerIds.includes(p.id);
+              const disabled = !checked && powerIds.length >= selectedKin.requiredPicks;
+              return (
+                <label
+                  key={p.id}
+                  className={[
+                    'block cursor-pointer rounded-xl border p-4 transition',
+                    checked
+                      ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-zinc-800'
+                      : 'border-zinc-700 hover:border-zinc-500 bg-zinc-800/60',
+                    disabled && !checked ? 'opacity-60 cursor-not-allowed' : ''
+                  ].join(' ')}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-5 w-5"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => togglePower(p.id)}
+                      aria-label={`Select ${p.name}`}
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-base font-semibold leading-snug">{p.name}</div>
+                        {p.usage && (
+                          <span className="rounded-full border border-zinc-600 px-2 py-0.5 text-xs text-zinc-300">
+                            {p.usage === 'once-per-battle' ? '1/Battle' : 'Passive'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* summary right under the title */}
+                      {p.summary && (
+                        <p className="text-sm text-zinc-400 mt-0.5">{p.summary}</p>
+                      )}
+
+                      {/* quick details */}
+                      <div className="mt-3 space-y-1.5 text-sm">
+                        {p.requirements && <KV label="Requirements" value={p.requirements} />}
+                        {p.trigger && <KV label="Trigger" value={p.trigger} />}
+                        {p.effect && <KV label="Effect" value={p.effect} />}
+                        {p.missEffect && <KV label="On Miss" value={p.missEffect} />}
+                        {p.critEffect && <KV label="On Crit" value={p.critEffect} />}
+                        {p.notes && <KV label="Notes" value={p.notes} />}
+                      </div>
+
+                      {/* feats */}
+                      {p.feats && p.feats.length > 0 && (
+                        <div className="mt-3 rounded-lg bg-zinc-800/70 p-3">
+                          <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                            Feats
+                          </div>
+                          <ul className="mt-1.5 space-y-1.5">
+                            {sortFeats(p.feats).map((f, i) => (
+                              <li key={i} className="text-sm leading-snug">
+                                <span className="mr-2 inline-flex items-center gap-1 rounded-full border border-zinc-600 px-2 py-0.5 text-xs">
+                                  {f.tier === 'adventurer'
+                                    ? 'Adventurer'
+                                    : f.tier === 'champion'
+                                    ? 'Champion'
+                                    : 'Epic'}
+                                </span>
+                                {f.description}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
@@ -132,4 +195,22 @@ export default function StepKin({ onNext, onBack }: Props) {
       )}
     </div>
   );
+}
+
+/* --- tiny helpers --- */
+function KV({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-start gap-2">
+      <div className="text-xs uppercase tracking-wide text-zinc-400 pt-0.5">{label}</div>
+      <div className="text-zinc-100">{value}</div>
+    </div>
+  );
+}
+
+function sortFeats(
+  feats: NonNullable<KinDef['powers']>[number]['feats']
+) {
+  if (!feats) return [];
+  const order = { adventurer: 0, champion: 1, epic: 2 } as const;
+  return [...feats].sort((a, b) => order[a.tier] - order[b.tier]);
 }
