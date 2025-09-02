@@ -1,22 +1,16 @@
 import React, { useMemo } from 'react';
-import { cn } from '@/utils/cn'; // optional tiny helper; replace with your own or inline className strings
-import { KIN } from '@/data/kin'; // your kin.ts export path
+import { cn } from '@/utils/cn';
+import { KIN } from '@/data/kin';
 import type { KinPowerDef, KinDef } from '@/data/kin';
 import { useCharacterStore } from '@/store/characterStore';
 
-/**
- * StepKinPowers
- * Wizard step to choose Kin Powers. Shows rich previews (summary, usage, requirements, trigger, effect, and feats).
- * - Supports any requiredPicks value (1+).
- * - Disables additional selections when max picks reached, with helpful UI cues.
- */
 export default function StepKinPowers() {
   const kinId = useCharacterStore(s => s.draft?.kinId);
   const chosenPowerIds = useCharacterStore(s => s.draft?.kinPowers ?? []);
   const setKinPowers = useCharacterStore(s => s.setKinPowers);
 
   const kin: KinDef | undefined = useMemo(() => KIN.find(k => k.id === kinId), [kinId]);
-  
+
   if (!kinId) {
     return (
       <div className="text-sm text-muted-foreground p-4 rounded border bg-gray-50">
@@ -29,28 +23,26 @@ export default function StepKinPowers() {
   const maxPicks = kin?.requiredPicks ?? 1;
   const picksRemaining = Math.max(0, maxPicks - (chosenPowerIds?.length ?? 0));
 
-  return (
-    <div className="space-y-4">
-      {/* ...rest of your existing JSX */}
-    </div>
-  );
-
+  // <-- Move togglePower ABOVE the final return
   function togglePower(id: string) {
     const current = new Set(chosenPowerIds ?? []);
     if (current.has(id)) {
       current.delete(id);
     } else {
-      if ((current.size) >= maxPicks) return; // guard
+      if (current.size >= maxPicks) return;
       current.add(id);
     }
     setKinPowers(Array.from(current));
   }
 
+  // <-- Keep ONLY this return
   return (
     <div className="space-y-4">
       <header className="flex items-baseline justify-between">
         <h1 className="text-2xl font-semibold">Choose Kin Power{maxPicks > 1 ? 's' : ''}</h1>
-        <span className="text-sm text-muted-foreground">{picksRemaining} pick{picksRemaining === 1 ? '' : 's'} remaining</span>
+        <span className="text-sm text-muted-foreground">
+          {picksRemaining} pick{picksRemaining === 1 ? '' : 's'} remaining
+        </span>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -66,15 +58,24 @@ export default function StepKinPowers() {
       </div>
 
       <footer className="flex items-center justify-between pt-2">
-        <div className="text-xs text-muted-foreground">Kin: <strong>{kin?.name ?? 'Unknown'}</strong> · Required picks: {maxPicks}</div>
-        <div className="text-xs text-muted-foreground">Selections: {(chosenPowerIds ?? []).length}/{maxPicks}</div>
+        <div className="text-xs text-muted-foreground">
+          Kin: <strong>{kin?.name ?? 'Unknown'}</strong> · Required picks: {maxPicks}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Selections: {(chosenPowerIds ?? []).length}/{maxPicks}
+        </div>
       </footer>
     </div>
   );
 }
 
 /** Card with rich preview for a Kin Power */
-function KinPowerCard({ power, checked, disabled, onChange }: {
+function KinPowerCard({
+  power,
+  checked,
+  disabled,
+  onChange,
+}: {
   power: KinPowerDef;
   checked: boolean;
   disabled?: boolean;
@@ -101,30 +102,17 @@ function KinPowerCard({ power, checked, disabled, onChange }: {
         />
         <div className="min-w-0">
           <h3 className="text-lg font-semibold leading-snug">{name}</h3>
+          {/* 👇 this shows the summary under the name */}
           {summary && <p className="text-sm text-muted-foreground mt-0.5">{summary}</p>}
 
           <div className="mt-3 space-y-1.5 text-sm">
-            {usage && (
-              <KV label="Usage" value={<Mono>{usage}</Mono>} />
-            )}
-            {requirements && (
-              <KV label="Requirements" value={requirements} />
-            )}
-            {trigger && (
-              <KV label="Trigger" value={trigger} />
-            )}
-            {effect && (
-              <KV label="Effect" value={effect} />
-            )}
-            {missEffect && (
-              <KV label="On Miss" value={missEffect} />
-            )}
-            {critEffect && (
-              <KV label="On Crit" value={critEffect} />
-            )}
-            {notes && (
-              <KV label="Notes" value={notes} />
-            )}
+            {usage && <KV label="Usage" value={<Mono>{usage === 'once-per-battle' ? '1/Battle' : 'Passive'}</Mono>} />}
+            {requirements && <KV label="Requirements" value={requirements} />}
+            {trigger && <KV label="Trigger" value={trigger} />}
+            {effect && <KV label="Effect" value={effect} />}
+            {missEffect && <KV label="On Miss" value={missEffect} />}
+            {critEffect && <KV label="On Crit" value={critEffect} />}
+            {notes && <KV label="Notes" value={notes} />}
           </div>
 
           {feats && feats.length > 0 && (
